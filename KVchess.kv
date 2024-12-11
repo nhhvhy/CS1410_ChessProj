@@ -1,0 +1,31 @@
+<Tile@Button>:
+    size_hint: 1, 1
+    size: 30, 30
+    padding: 0
+
+<MenuScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        Label:
+            text: 'Text Here'
+        Button:
+            id: playButton
+            text: 'Play Button'
+            on_press: root.manager.current = 'GameScreen'
+            size_hint_y: 0.2
+
+<GameScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        GridLayout:
+            id: playArea
+            orientation: 'rl-bt'
+            cols: 8
+            spacing: 0
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_y: 0.2
+            Button:
+                id: backButton
+                text: 'Go Home'
+                on_press: root.manager.current = 'MenuScreen'
