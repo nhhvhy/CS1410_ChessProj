@@ -21,7 +21,7 @@ class GameScreen(Screen):
         for x in range(8):
             letter = chr(97 + x)
             color_incr += 1
-            for y in range(8):
+            for y in range(8, 0, -1):
                 tile = self.createTile(color_incr % 2, letter, y)
                 color_incr += 1
                 layout.add_widget(tile)
