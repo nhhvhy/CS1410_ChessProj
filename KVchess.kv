@@ -22,10 +22,20 @@
             orientation: 'rl-bt'
             cols: 8
             spacing: 0
+            size_hint_y: 0.8
+
         BoxLayout:
-            orientation: 'vertical'
+            orientation: 'horizontal'
             size_hint_y: 0.2
+            size_hint_x: 1
+            Button:
+                id: turnIndicator
+                size_hint_x: 0.8
+                text: 'White\'s Turn'
+                halign: 'center'
+                valign: 'middle'
             Button:
                 id: backButton
+                size_hint_x: 0.2
                 text: 'Go Home'
                 on_press: root.manager.current = 'MenuScreen'
