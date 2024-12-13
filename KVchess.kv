@@ -1,13 +1,45 @@
 <MenuScreen>:
     BoxLayout:
         orientation: 'vertical'
+        canvas.before:
+            Color: 
+                rgba: 0.6, 0.7, 0.8, 1
+            Rectangle:
+                pos: self.pos
+                size: self.size
         Label:
-            text: 'Text Here'
+            text: 'Kivy Chess'
+            color: 1, 1, 1, 1
+            font_size: '40sp'
+            bold: True
+            halign: 'center'
+        Label:
+            text: 'CS1410 Final Project'
+            color: 1, 1, 1, 1
+            font_size: '30sp'
+            halign: 'center'
+        Label:
+            text: 'Max Ostler'
+            color: 1, 1, 1, 1
+            font_size: '30sp'
+            halign: 'center'
         Button:
             id: playButton
-            text: 'Play Button'
+            text: 'Play!'
             on_press: root.manager.current = 'GameScreen'
-            size_hint_y: 0.2
+            size_hint_y: None
+            size_hint_x: None
+            width: 250
+            height: 80
+            pos_hint: {"center_x": 0.5, "center_y": 0.25}
+            background_color: 0.6, 0.7, 0.8, 1
+            font_size: '24sp'
+            color: 1, 1, 1, 1
+            bold: True
+        Label:  # Used to space the button out
+            text: ''
+
+
 
 <GameScreen>:
     BoxLayout:

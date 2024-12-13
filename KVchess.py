@@ -1,11 +1,10 @@
 import chess
-import os
 from kivy.app import App
 from kivy.lang import Builder
 from kivy.uix.button import Button
 from kivy.uix.gridlayout import GridLayout
-from kivy.uix.image import Image
 from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.core.window import Window
 
 
 Builder.load_file('KVchess.kv')
@@ -30,14 +29,29 @@ class GameScreen(Screen):
         self.resetColors()
         self.updateBoard()
 
+    # Reset board each time the play screen is opened
+    def on_pre_enter(self):
+        self.resetScreen()
+
+    # Reset everything to the initial state
+    def resetScreen(self):
+        self.selected_piece = None
+        self.boardSetup()
+        self.resetColors()
+        self.updateBoard()
+
     def updateBoard(self):
         # Correct piece placement to account for Kivy gridlayout quirks
         for space, tile in zip(chess.SQUARES[::-1], self.layout.children):
             piece = self.board.piece_at(space)
             if piece:
-                tile.text = str(piece)
+                tile.text = str(piece).lower()
+                if piece.color:
+                    tile.color = (1, 1, 1, 1)
+                else:
+                    tile.color = (0, 0, 0, 1)
             else:
-                tile.text = ""  # Clear the tile if no piece
+                tile.text = ""
 
     def setStatus(self):
         status = self.ids.get('statusIndicator', Button)
@@ -75,6 +89,8 @@ class GameScreen(Screen):
         tile = Button()
         tile.coords = (letter, number)
         tile.bind(on_press=lambda instance: self.onTileSelect(tile.coords))
+        tile.font_name = 'CHESSFONT.TTF'
+        tile.font_size = Window.size[0] * 0.05
         return tile
     
     tileColors = [(0.94, 0.85, 0.71, 1), # Light Brown
@@ -90,10 +106,8 @@ class GameScreen(Screen):
                 iterator += 1
 
     def onTileSelect(self, coords):
-        # Reset the colors before anything else
         self.resetColors()
-        
-        # Parse the selected square
+
         square = chess.parse_square(f"{coords[0].lower()}{coords[1]}")
         
         # If there's a selected piece, try to make a move. Reset if piece is clicked twice.
@@ -119,19 +133,17 @@ class GameScreen(Screen):
                 self.selected_piece = None
                 self.resetColors()
                 self.setStatus()
-                return  # Exit the function after making the move
+                return
         
         # If no piece is selected, select the current piece
         if coords != self.selected_piece:  # Only highlight if no piece is already selected
             self.selected_piece = coords
             piece = self.board.piece_at(square)
             if piece:
-                print(f"Piece at {coords}: {piece}")
                 piece_moves = [move for move in self.board.legal_moves if move.from_square == square]
                 for move in piece_moves:
-                    print(move)
                     self.highlightTile(str(move)[2:])
-                self.highlightTile(coords, (0.8, 0.6, 0.6, 1))  # Highlight the selected piece
+                self.highlightTile(coords, (0.8, 0.6, 0.6, 1))
         else:
             # Deselect piece if clicked again (nothing happens if same piece is clicked)
             self.selected_piece = None
@@ -149,8 +161,6 @@ class GameScreen(Screen):
     
     def boardSetup(self):
         self.board = chess.Board()
-        print("Initial board setup:")
-        print(self.board)
 
 class Main(App):
     def build(self):
