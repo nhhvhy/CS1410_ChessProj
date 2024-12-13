@@ -16,24 +16,58 @@ class GameScreen(Screen):
         self.layout = self.ids.get('playArea', GridLayout)
         
         # Create the tiles with proper coordinates
-        for y in range(1, 9):  # Row goes from 1 to 8 (bottom to top)
-            for x in range(1, 9):  # Column goes from 1 to 8 (left to right)
+        for y in range(1, 9):
+            for x in range(1, 9):
                 letter = chr(96 + x)  # Convert column index to letter (a-h)
                 tile = self.createTile(letter, y)
-                # Add the tile at the correct position
                 self.layout.add_widget(tile)
 
         self.selected_piece = None
-
         self.boardSetup()
         self.resetColors()
-        
-        # Correct the placement of pieces in chess notation, row-by-row
+        self.updateBoard()
+
+    def updateBoard(self):
+        # Correct piece placement to account for Kivy gridlayout quirks
         for space, tile in zip(chess.SQUARES[::-1], self.layout.children):
             piece = self.board.piece_at(space)
             if piece:
                 tile.text = str(piece)
-        
+            else:
+                tile.text = ""  # Clear the tile if no piece
+
+    def setStatus(self):
+        status = self.ids.get('statusIndicator', Button)
+        if self.board.is_check():
+            arg = 'Check'
+            if self.board.is_checkmate():
+                arg = 'Checkmate'
+        elif self.board.is_fifty_moves():
+            arg = 'Draw'
+        else:
+            arg = 'Rotate'
+
+        if arg == 'Rotate':
+            if status.text == 'White\'s Turn' or status.text == 'Check! White\'s Turn':
+                status.text = 'Black\'s Turn'
+            else:
+                status.text = 'White\'s Turn'
+
+        if arg == 'Check':
+            if status.text == 'White\'s Turn' or status.text == 'Check! White\'s Turn':
+                status.text = 'Check! Black\'s Turn'
+            else:
+                status.text = 'Check! White\'s Turn' 
+
+        if arg == 'Checkmate':
+            if status.text == 'White\'s Turn' or status.text == 'Check! White\'s Turn':
+                status.text = 'Checkmate! Black wins'
+            else:
+                status.text = 'Checkmate! White wins'
+
+        if arg == 'Draw':
+            status.text = '50 move limit reached! It\'s a draw'
+
     def createTile(self, letter, number):
         tile = Button()
         tile.coords = (letter, number)
@@ -53,34 +87,53 @@ class GameScreen(Screen):
                 iterator += 1
 
     def onTileSelect(self, coords):
+        # Reset the colors before anything else
+        self.resetColors()
+        
+        # Parse the selected square
         square = chess.parse_square(f"{coords[0].lower()}{coords[1]}")
-
-        # Clear highlighted tiles if the same piece is selected again
-        if coords == self.selected_piece:
-            self.resetColors()
-            self.selected_piece = None
-            return True
-        self.selected_piece = coords
-
-        # Check if a piece is at the square and show legal moves
-        piece = self.board.piece_at(square)
-        if piece:
-            print(f"Piece at {coords}: {piece}")
-            piece_moves = [move for move in self.board.legal_moves if move.from_square == square]
-            for move in piece_moves:
-                print(move)
-                self.highlightTile(str(move)[2:])
+        
+        # If there's a selected piece, try to make a move. Reset if piece is clicked twice.
+        if self.selected_piece:
+            if self.selected_piece == coords:
+                self.resetColors()
+                self.selected_piece = None
+                return
+            # Construct move from selected piece and current square
+            move = chess.Move.from_uci(self.selected_piece[0] + str(self.selected_piece[1]) + coords[0] + str(coords[1]))
+            
+            # If the move is legal, push the move and reset the selected piece
+            if move in self.board.legal_moves:
+                self.board.push(move)
+                self.updateBoard()
+                self.selected_piece = None
+                self.resetColors()
+                self.setStatus()
+                return  # Exit the function after making the move
+        
+        # If no piece is selected, select the current piece
+        if coords != self.selected_piece:  # Only highlight if no piece is already selected
+            self.selected_piece = coords
+            piece = self.board.piece_at(square)
+            if piece:
+                print(f"Piece at {coords}: {piece}")
+                piece_moves = [move for move in self.board.legal_moves if move.from_square == square]
+                for move in piece_moves:
+                    print(move)
+                    self.highlightTile(str(move)[2:])
+                self.highlightTile(coords, (0.8, 0.6, 0.6, 1))  # Highlight the selected piece
         else:
-            print('No piece here')
+            # Deselect piece if clicked again (nothing happens if same piece is clicked)
+            self.selected_piece = None
+            self.resetColors()
 
-    def highlightTile(self, coords):
+    def highlightTile(self, coords, color=(0.6, 0.8, 0.6, 1)):
         tile = self.getTileByCoords(coords)
-        tile.background_color = (0.6, 0.8, 0.6, 1)
+        if tile:
+            tile.background_color = color
     
     def getTileByCoords(self, coords):
-        print((coords[0], int(coords[1])))
         for tile in self.layout.children:
-            print(tile.coords)
             if tile.coords == (coords[0], int(coords[1])):
                 return tile
     
