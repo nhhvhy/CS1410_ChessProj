@@ -1,9 +1,12 @@
 import chess
+import os
 from kivy.app import App
 from kivy.lang import Builder
 from kivy.uix.button import Button
 from kivy.uix.gridlayout import GridLayout
+from kivy.uix.image import Image
 from kivy.uix.screenmanager import ScreenManager, Screen
+
 
 Builder.load_file('KVchess.kv')
 
@@ -101,6 +104,13 @@ class GameScreen(Screen):
                 return
             # Construct move from selected piece and current square
             move = chess.Move.from_uci(self.selected_piece[0] + str(self.selected_piece[1]) + coords[0] + str(coords[1]))
+            
+            # Check if it's a pawn promotion move
+            from_square = chess.parse_square(f"{self.selected_piece[0].lower()}{self.selected_piece[1]}")
+            piece = self.board.piece_at(from_square)
+            if piece and piece.piece_type == chess.PAWN:
+                if (piece.color and coords[1] == 8) or (not piece.color and coords[1] == 1):
+                    move = chess.Move(from_square, square, promotion=chess.QUEEN)
             
             # If the move is legal, push the move and reset the selected piece
             if move in self.board.legal_moves:
